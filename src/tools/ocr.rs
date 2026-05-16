@@ -18,13 +18,17 @@ impl OcrTool {
         if let Ok(path) = std::env::var("TESSERACT_PATH") {
             if std::path::Path::new(&path).exists() { return Some(path); }
         }
-        // Check common locations relative to working dir
-        for path in &[
-            "tesseract/tesseract.exe",
-            "tesseract/bin/tesseract.exe",
-            "C:/Program Files/Tesseract-OCR/tesseract.exe",
-            "C:/Program Files (x86)/Tesseract-OCR/tesseract.exe",
-        ] {
+        // Check common locations
+        let project_root = env!("CARGO_MANIFEST_DIR");
+        let candidates = vec![
+            format!("{}/tesseract/tesseract.exe", project_root),
+            format!("{}/tesseract/bin/tesseract.exe", project_root),
+            "tesseract/tesseract.exe".to_string(),
+            "tesseract/bin/tesseract.exe".to_string(),
+            "C:/Program Files/Tesseract-OCR/tesseract.exe".to_string(),
+            "C:/Program Files (x86)/Tesseract-OCR/tesseract.exe".to_string(),
+        ];
+        for path in &candidates {
             if std::path::Path::new(path).exists() { return Some(path.to_string()); }
         }
         // Try as PATH command
