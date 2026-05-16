@@ -246,7 +246,7 @@ async fn handle_message(
 
         let (text, tool_calls) = dispatcher::parse_tool_calls(&response);
         if tool_calls.is_empty() {
-            let preview: String = text.chars().take(60).collect();
+            let preview: String = text.chars().take(300).collect();
             info!("LLM decided: no tool calls. Response: {}", preview);
             final_response = text;
             break;
