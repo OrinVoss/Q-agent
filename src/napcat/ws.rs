@@ -45,6 +45,9 @@ pub async fn connect(
                 error!("WebSocket error: {}", e);
                 break;
             }
+            Ok(Message::Binary(data)) => {
+                warn!("WebSocket received unexpected binary ({} bytes)", data.len());
+            }
             _ => {}
         }
     }

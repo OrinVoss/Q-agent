@@ -93,7 +93,11 @@ async fn workspace_list() -> Json<Vec<String>> {
 }
 
 async fn workspace_file(Path(path): Path<String>) -> impl IntoResponse {
-    let path = format!("claude_workspace/{}", path);
+    let path_str = path.replace('\\', "/");
+    if path_str.contains("..") || path_str.contains('/') {
+        return Html("<p>Invalid path</p>".to_string());
+    }
+    let path = format!("claude_workspace/{}", path_str);
     match tokio::fs::read_to_string(&path).await {
         Ok(content) => Html(format!("<pre>{}</pre>", html_escape(&content))),
         Err(_) => Html("<p>File not found or binary</p>".to_string()),
@@ -132,6 +136,9 @@ struct ExclusionReq {
 }
 
 async fn exclusion_add(State(state): State<AppState>, Json(req): Json<ExclusionReq>) -> Json<serde_json::Value> {
+    if req.exclude_type != "group" && req.exclude_type != "user" {
+        return Json(serde_json::json!({"ok": false, "error": "exclude_type must be 'group' or 'user'"}));
+    }
     let ok = state.exclusions.add(&req.exclude_type, req.target_id, req.note.as_deref().unwrap_or(""));
     Json(serde_json::json!({"ok": ok}))
 }
