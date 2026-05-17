@@ -88,6 +88,10 @@ impl NapCatApi {
     }
 
     pub async fn download_file(&self, url: &str) -> Option<Vec<u8>> {
+        if !url.starts_with("http://") && !url.starts_with("https://") {
+            tracing::warn!("SSRF blocked: non-HTTP URL: {}", url.chars().take(100).collect::<String>());
+            return None;
+        }
         self.client
             .get(url)
             .send()
