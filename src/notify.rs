@@ -1,19 +1,26 @@
 use std::process::Command;
 
 pub fn send_toast(title: &str, body: &str) {
-    let safe_title = title.replace('\'', "''");
-    let safe_body = body.replace('\'', "''");
+    // XML-encode to prevent PowerShell injection
+    let safe_title = title.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+        .replace('\'', "&apos;").replace('"', "&quot;");
+    let safe_body = body.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+        .replace('\'', "&apos;").replace('"', "&quot;");
 
     let ps_script = format!(
         r#"
-$null = [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
-$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-$textNodes = $template.GetElementsByTagName('text')
-$textNodes.Item(0).AppendChild($template.CreateTextNode('{0}')) | Out-Null
-$textNodes.Item(1).AppendChild($template.CreateTextNode('{1}')) | Out-Null
-$toastEl = $template.SelectSingleNode('/toast')
-$toastEl.SetAttribute('duration', 'long')
-$toast = [Windows.UI.Notifications.ToastNotification]::new($template)
+$xml = [Windows.Data.Xml.Dom.XmlDocument]::new()
+$xml.LoadXml(@"
+<toast duration=""long"">
+  <visual>
+    <binding template=""ToastText02"">
+      <text id=""1"">{0}</text>
+      <text id=""2"">{1}</text>
+    </binding>
+  </visual>
+</toast>
+"@)
+$toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('QAgent').Show($toast)
 "#,
         safe_title, safe_body
