@@ -122,6 +122,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
             let cfg = config::Config::from_env();
+    let safe_ws = cfg.napcat_ws_url.split('?').next().unwrap_or(&cfg.napcat_ws_url).to_string();
 
     let ver = env!("CARGO_PKG_VERSION");
     println!();
@@ -141,14 +142,14 @@ async fn main() -> anyhow::Result<()> {
 ");
     print!("[36m  │                                                           │
 ");
-    print!("[36m  │ [33m                         v0.1.0                           [36m│
-");
+    print!("[36m  │ [33m                         {}                           [36m│
+", ver);
     print!("[36m  │                                                           │
 ");
     print!("[36m  ├───────────────────────────────────────────────────────────┤
 ");
     print!("[36m  │  [0mNapCat  {}                              [36m│
-", cfg.napcat_ws_url);
+", safe_ws);
     print!("[36m  │  [0mLLM     Qwen3.5-9B (9B, :8081, GPU)                      [36m│
 ");
     print!("[36m  │  [0mEmbed   Qwen3.5-0.8B (0.8B, :8082, CPU)                  [36m│

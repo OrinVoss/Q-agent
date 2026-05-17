@@ -108,7 +108,7 @@ async fn claude_progress() -> Json<serde_json::Value> {
 }
 
 fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;").replace('"', "&quot;").replace('\'', "&#39;")
 }
 
 async fn memory_delete(State(state): State<AppState>, Json(req): Json<IdReq>) -> Json<serde_json::Value> {
