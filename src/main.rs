@@ -163,23 +163,29 @@ async fn main() -> anyhow::Result<()> {
     print!("[0m
 ");
 
-    let (_llm_process, llm_url) = start_llama_server(&cfg);
+    let (llm_process, llm_url) = start_llama_server(&cfg);
     // Start embed server (0.8B model)
-    let embed_port = "8082";
+    let embed_process = {
+        let embed_port = "8082";
     if !std::net::TcpStream::connect("127.0.0.1:8082").is_ok() {
         let embed_path = std::path::Path::new(&cfg.embed_model_path);
         if embed_path.exists() {
             warn!("Starting embed server on port {}...", embed_port);
-            std::process::Command::new(&cfg.llama_server_path)
+            let spawn_result = std::process::Command::new(&cfg.llama_server_path)
                 .args(["-m", &cfg.embed_model_path, "--host", "127.0.0.1", "--port", embed_port,
                        "-ngl", "0", "--ctx-size", "512", "--embeddings", "--pooling", "mean"])
                 .stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null())
                 .spawn().ok();
             std::thread::sleep(std::time::Duration::from_secs(5));
+            spawn_result
         } else {
             warn!("Embed model not found at {}, using main LLM for embeddings", cfg.embed_model_path);
+            None
         }
+    } else {
+        None
     }
+};
 
     // Ensure data directory
     let _ = std::fs::create_dir_all(&cfg.data_dir);
@@ -262,5 +268,7 @@ async fn main() -> anyhow::Result<()> {
 
     tokio::signal::ctrl_c().await?;
     info!("Shutting down...");
+    if let Some(mut child) = llm_process { let _ = child.kill(); let _ = child.wait(); }
+    if let Some(mut child) = embed_process { let _ = child.kill(); let _ = child.wait(); }
     Ok(())
 }
